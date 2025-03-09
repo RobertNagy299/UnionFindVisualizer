@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disjoint Set Visualizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #graph {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      max-width: 90%;
+      align-items: center;
+      margin: 20px;
+    }
+
+    .tree-level {
+      display: flex;
+      justify-content: center;
+    }
+
+    .node {
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      border-radius: 50%;
+      background: #4CAF50;
+      color: white;
+      text-align: center;
+      margin: 10px;
+      position: relative;
+    }
+
+    .set {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      max-width: 180px;
+      padding: 14px;
+      margin: 5px;
+      border: 3px black solid;
+      border-radius: 10px;
+    }
+
+    .rootNode {
+      background-color: rgb(255, 1, 1) !important;
+    }
+
+    input,
+    button {
+      margin: 5px;
+      padding: 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Disjoint Set Union (DSU) Visualizer by Robert Nagy</h2>
+  <h3>Root nodes are red, child nodes are green</h3>
+  <h4>Check out my <a href="https://github.com/RobertNagy299" target="_blank">Github</a></h4>
+  <div>
+    <input type="number" id="node1" placeholder="Node 1">
+    <input type="number" id="node2" placeholder="Node 2">
+    <button onclick="unionNodes()">Union</button>
+    <button onclick="checkConnected()" style="margin-bottom: 25px;">Connected?</button>
+    <br>
+    <input type="number" id="findNode" placeholder="Find Node">
+    <button onclick="findNode()">Find Root</button>
+    <br>
+    <br>
+    <input type="number" id="newGraph" placeholder="Enter new size">
+    <button onclick="resizeGraph()">Create a new graph</button>
+  </div>
+  <div id="graph"></div>
+
+  <script>
+
+    class UnionFind {
+      constructor(size) {
+        this.root = [];
+        this.rank = [];
+        for (let i = 0; i < size; i++) {
+          this.root[i] = i;
+          this.rank[i] = 1;
+        }
+      }
+
+      find(x) {
+        if (x === this.root[x]) return x;
+        return this.root[x] = this.find(this.root[x]);
+      }
+
+      union(x, y) {
+        const rootX = this.find(x);
+        const rootY = this.find(y);
+        if (rootX !== rootY) {
+          if (this.rank[rootX] < this.rank[rootY]) {
+            this.root[rootX] = rootY;
+          } else if (this.rank[rootX] > this.rank[rootY]) {
+            this.root[rootY] = rootX;
+          } else {
+            this.root[rootY] = rootX;
+            this.rank[rootX]++;
+          }
+        }
+      }
+
+      connected(x, y) {
+        return this.find(x) === this.find(y);
+      }
+    }
+
+    let size = 10;
+    let uf = new UnionFind(size);
+
+    function renderGraph() {
+      const graph = document.getElementById('graph');
+      graph.innerHTML = '';
+      const levels = {};
+
+      for (let i = 0; i < size; i++) {
+        const root = uf.find(i);
+        if (!levels[root]){
+          levels[root] = [];
+        } 
+        levels[root].push(i);
+      }
+
+      for (const root in levels) {
+        const levelDiv = document.createElement('div');
+        levelDiv.className = 'set';
+        levels[root].forEach(node => {
+          const nodeDiv = document.createElement('div');
+          if(node == root) {
+            nodeDiv.className = 'node rootNode';
+          } else {
+            nodeDiv.className = 'node';
+          }
+          
+          nodeDiv.innerText = `${node}`;
+          nodeDiv.title = `Root: ${uf.find(node)}`;
+          levelDiv.appendChild(nodeDiv);
+
+        });
+        graph.appendChild(levelDiv);
+      }
+    }
+
+    function unionNodes() {
+      const node1 = parseInt(document.getElementById('node1').value);
+      const node2 = parseInt(document.getElementById('node2').value);
+      uf.union(node1, node2);
+      renderGraph();
+    }
+
+    function checkConnected() {
+      const node1 = parseInt(document.getElementById('node1').value);
+      const node2 = parseInt(document.getElementById('node2').value);
+      alert(uf.connected(node1, node2) ? 'Connected' : 'Not Connected');
+    }
+
+    function findNode() {
+      const node = parseInt(document.getElementById('findNode').value);
+      alert(`Root of ${node}: ${uf.find(node)}`);
+      renderGraph();
+    }
+
+    function resizeGraph() {
+      size = parseInt(document.getElementById('newGraph').value);
+      uf = new UnionFind(size)
+      renderGraph();
+    }
+
+    renderGraph();
+  </script>
+</body>
+
+</html>
